@@ -9,22 +9,22 @@ import org.valkyrienskies.engine.EngineConfig
 import org.valkyrienskies.physics_api.SegmentDisplacement
 
 fun stabilize(
-    ship: PhysShipImpl,
-    omega: Vector3dc,
-    vel: Vector3dc,
-    segment: SegmentDisplacement,
-    forces: PhysShip,
-    linear: Boolean,
-    yaw: Boolean
+    ship: PhysShipImpl,  // 船只实现
+    omega: Vector3dc,  // 角速度
+    vel: Vector3dc,  // 速度
+    segment: SegmentDisplacement,  // 段位移
+    forces: PhysShip,  // 物理船只
+    linear: Boolean,  // 线性
+    yaw: Boolean  // 偏航
 ) {
-    val shipUp = Vector3d(0.0, 1.0, 0.0)
-    val worldUp = Vector3d(0.0, 1.0, 0.0)
-    SegmentUtils.transformDirectionWithoutScale(ship.poseVel, segment, shipUp, shipUp)
+    val shipUp = Vector3d(0.0, 1.0, 0.0)  // 船只向上的向量
+    val worldUp = Vector3d(0.0, 1.0, 0.0)  // 世界向上的向量
+    SegmentUtils.transformDirectionWithoutScale(ship.poseVel, segment, shipUp, shipUp)  // 转换方向不缩放
 
-    val angleBetween = shipUp.angle(worldUp)
-    val idealAngularAcceleration = Vector3d()
+    val angleBetween = shipUp.angle(worldUp)  // 船只向上的向量和世界向上的向量之间的角度
+    val idealAngularAcceleration = Vector3d()  // 理想的角加速度
     if (angleBetween > .01) {
-        val stabilizationRotationAxisNormalized = shipUp.cross(worldUp, Vector3d()).normalize()
+        val stabilizationRotationAxisNormalized = shipUp.cross(worldUp, Vector3d()).normalize()  // 稳定旋转轴归一化
         idealAngularAcceleration.add(
             stabilizationRotationAxisNormalized.mul(
                 angleBetween,
@@ -33,9 +33,6 @@ fun stabilize(
         )
     }
 
-    // Only subtract the x/z components of omega.
-    // We still want to allow rotation along the Y-axis (yaw).
-    // Except if yaw is true, then we stabilize
     idealAngularAcceleration.sub(
         omega.x(),
         if (!yaw) 0.0 else omega.y(),
@@ -56,17 +53,18 @@ fun stabilize(
         idealAngularAcceleration
     )
 
-    stabilizationTorque.mul(EngineConfig.SERVER.stabilizationTorqueConstant)
-    forces.applyInvariantTorque(stabilizationTorque)
+    stabilizationTorque.mul(EngineConfig.SERVER.stabilizationTorqueConstant)  // 稳定扭矩乘以稳定扭矩常数
+    forces.applyInvariantTorque(stabilizationTorque)  // 应用不变扭矩
 
     if (linear) {
-        val idealVelocity = Vector3d(vel).negate()
+        val idealVelocity = Vector3d(vel).negate()  // 理想速度
         idealVelocity.y = 0.0
 
         if (idealVelocity.lengthSquared() > (EngineConfig.SERVER.linearStabilizeMaxAntiVelocity * EngineConfig.SERVER.linearStabilizeMaxAntiVelocity))
-            idealVelocity.normalize(EngineConfig.SERVER.linearStabilizeMaxAntiVelocity)
+            idealVelocity.normalize(EngineConfig.SERVER.linearStabilizeMaxAntiVelocity)  // 如果理想速度的平方长度大于线性稳定最大反速度的平方，则将理想速度归一化
 
-        idealVelocity.mul(ship.inertia.shipMass * (10 - EngineConfig.SERVER.antiVelocityMassRelevance))
-        forces.applyInvariantForce(idealVelocity)
+        idealVelocity.mul(ship.inertia.shipMass * (10 - EngineConfig.SERVER.antiVelocityMassRelevance))  // 理想速度乘以船只质量和反速度质量相关性的差
+        forces.applyInvariantForce(idealVelocity)  // 应用不变力
     }
 }
+

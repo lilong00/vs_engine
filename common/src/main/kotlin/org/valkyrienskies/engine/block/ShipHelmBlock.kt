@@ -33,18 +33,23 @@ import org.valkyrienskies.engine.util.RotShapes
 import org.valkyrienskies.mod.common.ValkyrienSkiesMod
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.getShipObjectManagingPos
+import java.util.*
 
-class ShipHelmBlock(properties: Properties, val woodType: WoodType) : BaseEntityBlock(properties) {
-    val HELM_BASE = RotShapes.box(1.0, 0.0, 1.0, 15.0, 1.0, 15.0)
-    val HELM_POLE = RotShapes.box(4.0, 1.0, 7.0, 12.0, 12.0, 13.0)
+// 定义一个船舵块类，继承自基础实体块类
+   class ShipHelmBlock(properties: Properties, val woodType: WoodType) : BaseEntityBlock(properties) {
+        // 定义船舵的基座形状
+   val HELM_BASE = RotShapes.box(1.0, 0.0, 1.0, 15.0, 1.0, 15.0)
 
-    val HELM_SHAPE = DirectionalShape(RotShapes.or(HELM_BASE, HELM_POLE))
+        // 定义船舵的整体形状，由基座和杆组成
+   val HELM_SHAPE = DirectionalShape(HELM_BASE)
 
-    init {
+       // 初始化函数，注册默认状态
+   init {
         registerDefaultState(this.stateDefinition.any().setValue(HORIZONTAL_FACING, Direction.NORTH))
     }
 
-    override fun onPlace(state: BlockState, level: Level, pos: BlockPos, oldState: BlockState, isMoving: Boolean) {
+       // 当块被放置时的操作
+  override fun onPlace(state: BlockState, level: Level, pos: BlockPos, oldState: BlockState, isMoving: Boolean) {
         super.onPlace(state, level, pos, oldState, isMoving)
 
         if (level.isClientSide) return
@@ -54,7 +59,8 @@ class ShipHelmBlock(properties: Properties, val woodType: WoodType) : BaseEntity
         EngineShipControl.getOrCreate(ship).helms += 1
     }
 
-    override fun destroy(level: LevelAccessor, pos: BlockPos, state: BlockState) {
+       // 当块被破坏时的操作
+  override fun destroy(level: LevelAccessor, pos: BlockPos, state: BlockState) {
         super.destroy(level, pos, state)
 
         if (level.isClientSide) return
@@ -70,47 +76,64 @@ class ShipHelmBlock(properties: Properties, val woodType: WoodType) : BaseEntity
             control.helms -= 1
         }
     }
+       
 
-    override fun use(
+  // 当块被使用时的操作
+  override fun use(
         state: BlockState,
+
         level: Level,
         pos: BlockPos,
         player: Player,
         hand: InteractionHand,
         blockHitResult: BlockHitResult
     ): InteractionResult {
+        // 如果是在客户端，直接返回成功
         if (level.isClientSide) return InteractionResult.SUCCESS
+        // 获取块实体
         val blockEntity = level.getBlockEntity(pos) as ShipHelmBlockEntity
 
+        // 如果玩家正在进行次要操作（例如潜行），则打开船舵菜单
         return if (player.isSecondaryUseActive) {
             player.openMenu(blockEntity)
             InteractionResult.CONSUME
-        } else if (level.getShipManagingPos(pos) == null) {
+        } 
+        // 如果当前位置没有船只管理，提示玩家潜行打开船舵
+        else if (level.getShipManagingPos(pos) == null) {
             player.displayClientMessage(TextComponent("Sneak to open the ship helm!"), true)
             InteractionResult.CONSUME
-        } else if (blockEntity.sit(player)) {
+        } 
+        // 如果玩家可以坐在船舵上，消耗操作
+        else if (blockEntity.sit(player)) {
             InteractionResult.CONSUME
-        } else InteractionResult.PASS
+        } 
+        // 其他情况，不做任何操作
+        else InteractionResult.PASS
     }
 
-    override fun getRenderShape(blockState: BlockState): RenderShape {
+       // 获取渲染形状
+  override fun getRenderShape(blockState: BlockState): RenderShape {
         return RenderShape.MODEL
     }
 
-    override fun getStateForPlacement(ctx: BlockPlaceContext): BlockState? {
+       // 获取放置状态
+  override fun getStateForPlacement(ctx: BlockPlaceContext): BlockState? {
         return defaultBlockState()
             .setValue(HORIZONTAL_FACING, ctx.horizontalDirection.opposite)
     }
 
-    override fun createBlockStateDefinition(builder: StateDefinition.Builder<Block, BlockState>) {
+       // 创建块状态定义
+  override fun createBlockStateDefinition(builder: StateDefinition.Builder<Block, BlockState>) {
         builder.add(HORIZONTAL_FACING)
     }
 
-    override fun newBlockEntity(blockPos: BlockPos, state: BlockState): BlockEntity {
+      // 创建新的块实体
+  override fun newBlockEntity(blockPos: BlockPos, state: BlockState): BlockEntity {
         return ShipHelmBlockEntity(blockPos, state)
     }
 
-    override fun getShape(
+       // 获取形状
+  override fun getShape(
         blockState: BlockState,
         blockGetter: BlockGetter,
         blockPos: BlockPos,
@@ -119,11 +142,13 @@ class ShipHelmBlock(properties: Properties, val woodType: WoodType) : BaseEntity
         return HELM_SHAPE[blockState.getValue(HORIZONTAL_FACING)]
     }
 
-    override fun useShapeForLightOcclusion(blockState: BlockState): Boolean {
+      // 使用形状进行光照遮挡
+  override fun useShapeForLightOcclusion(blockState: BlockState): Boolean {
         return true
     }
 
-    override fun isPathfindable(
+       // 判断是否可以寻路
+  override fun isPathfindable(
             blockState: BlockState,
             blockGetter: BlockGetter,
             blockPos: BlockPos,
@@ -132,11 +157,13 @@ class ShipHelmBlock(properties: Properties, val woodType: WoodType) : BaseEntity
         return false
     }
 
-    override fun rotate(state: BlockState, rotation: Rotation): BlockState? {
+       // 旋转块状态
+  override fun rotate(state: BlockState, rotation: Rotation): BlockState? {
         return state.setValue(HORIZONTAL_FACING, rotation.rotate(state.getValue(HORIZONTAL_FACING) as Direction)) as BlockState
     }
 
-    override fun <T : BlockEntity?> getTicker(
+       // 获取实体块的计时器
+  override fun <T : BlockEntity?> getTicker(
         level: Level,
         state: BlockState,
         type: BlockEntityType<T>
@@ -147,3 +174,5 @@ class ShipHelmBlock(properties: Properties, val woodType: WoodType) : BaseEntity
         }
     }
 }
+
+

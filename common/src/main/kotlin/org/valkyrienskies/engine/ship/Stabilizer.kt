@@ -7,7 +7,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import net.minecraft.core.Direction
 import net.minecraft.network.chat.TranslatableComponent
 import net.minecraft.world.entity.player.Player
-import org.joml.*
+import org.joml.AxisAngle4d
+import org.joml.Quaterniond
+import org.joml.Vector3d
+import org.joml.Vector3dc
 import org.valkyrienskies.core.api.VSBeta
 import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.api.ships.ServerShip
@@ -22,7 +25,6 @@ import org.valkyrienskies.core.impl.pipelines.SegmentUtils
 import org.valkyrienskies.engine.EngineConfig
 import org.valkyrienskies.mod.api.SeatedControllingPlayer
 import org.valkyrienskies.mod.common.util.toJOMLD
-import java.lang.Math
 import kotlin.math.*
 
 @JsonAutoDetect(
@@ -32,8 +34,8 @@ import kotlin.math.*
     setterVisibility = JsonAutoDetect.Visibility.NONE
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
-// 引擎船舶控制类
-class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
+ class Stabilizer: ShipForcesInducer, ServerShipUser, Ticked {
+
     @JsonIgnore
     // 船舶实例
     override var ship: ServerShip? = null
@@ -47,11 +49,9 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
     // 对齐标志
     var aligning = false
     // 拆解标志，也会影响位置
-    var disassembling = false 
+    var disassembling = false
     // 物理消耗
     private var physConsumption = 0f
-
-    private val farters = mutableListOf<Pair<Vector3i, Direction>>()
     // 锚定状态
     private val anchored get() = anchorsActive > 0
 
@@ -111,7 +111,6 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
     @OptIn(VSBeta::class)
     // 应用力量方法
     override fun applyForces(physShip: PhysShip) {
-        if (ship == null) return
         // 如果舵小于1，启用流体阻力，因为所有的舵都已被摧毁
         if (helms < 1) {
             physShip.doFluidDrag = true
@@ -119,8 +118,6 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
         }
         // 当舵存在时，禁用流体阻力，因为它使船难以驾驶
         physShip.doFluidDrag = EngineConfig.SERVER.doFluidDrag
-
-        val forcesApplier = physShip
 
         physShip as PhysShipImpl
 
@@ -184,7 +181,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
         // 结束对齐区域
 
         // 稳定化
-        /*stabilize(
+        stabilize(
             physShip,
             omega,
             vel,
@@ -192,7 +189,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
             physShip,
             controllingPlayer == null && !aligning,
             controllingPlayer == null
-        )*/
+        )
 
         var idealUpwardVel = Vector3d(0.0, 0.0, 0.0)
 
@@ -296,7 +293,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
             )
 
             physShip.applyInvariantTorque(rotationVector)
-            
+
             val forwardVector = control.seatInDirection.normal.toJOMLD()
             SegmentUtils.transformDirectionWithoutScale(
                 physShip.poseVel,
@@ -339,8 +336,8 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
                 idealUpwardVel = Vector3d(0.0, 1.0, 0.0)
                     .mul(control.upImpulse.toDouble())
                     .mul(EngineConfig.SERVER.baseImpulseElevationRate +
-                        // 平滑处理，当你接近气球最大速度时，升降速度如何缩放
-                        smoothing(2.0, EngineConfig.SERVER.balloonElevationMaxSpeed, balloonForceProvided / mass)
+                            // 平滑处理，当你接近气球最大速度时，升降速度如何缩放
+                            smoothing(2.0, EngineConfig.SERVER.balloonElevationMaxSpeed, balloonForceProvided / mass)
                     )
             }
         }
@@ -377,27 +374,27 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
     // 动力
     var power = 0.0
     // 锚的数量
-    var anchors = 0 
+    var anchors = 0
         set(v) {
             field = v; deleteIfEmpty()
         }
 
     // 活动的锚的数量
-    var anchorsActive = 0 
+    var anchorsActive = 0
     // 气球的数量
-    var balloons = 0 
+    var balloons = 0
         set(v) {
             field = v; deleteIfEmpty()
         }
 
     // 舵的数量
-    var helms = 0 
+    var helms = 0
         set(v) {
             field = v; deleteIfEmpty()
         }
 
     // 浮子的数量 * 15
-    var floaters = 0 
+    var floaters = 0
         set(v) {
             field = v; deleteIfEmpty()
         }
@@ -413,7 +410,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
     // 如果为空则删除
     private fun deleteIfEmpty() {
         if (helms <= 0 && floaters <= 0 && anchors <= 0 && balloons <= 0) {
-            ship?.saveAttachment<EngineShipControl>(null)
+            ship?.saveAttachment<Stabilizer>(null)
         }
     }
 
@@ -425,9 +422,9 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
 
     companion object {
         // 获取或创建
-        fun getOrCreate(ship: ServerShip): EngineShipControl {
-            return ship.getAttachment<EngineShipControl>()
-                ?: EngineShipControl().also { ship.saveAttachment(it) }
+        fun getOrCreate(ship: ServerShip): Stabilizer {
+            return ship.getAttachment<Stabilizer>()
+                ?: Stabilizer().also { ship.saveAttachment(it) }
         }
 
         // 对齐阈值
@@ -440,5 +437,4 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
         // 重力
         private const val GRAVITY = -10.0
     }
-
-}
+ }

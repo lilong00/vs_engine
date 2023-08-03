@@ -6,6 +6,8 @@
   "block.vs_engine.balloon": "Balloon",
   "block.vs_engine.floater": "Floater",
   "block.vs_engine.ballast": "Ballast",
+  "block.vs_engine.gyros": "Gyros",
+  "block.vs_engine.controllers": "controllers",
   "gui.vs_engine.ship_helm": "Ship Helm",
   "gui.vs_engine.engine": "Engine",
   "gui.vs_engine.assemble": "Assemble",

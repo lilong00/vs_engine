@@ -68,8 +68,8 @@ object EngineConfig {
         @JsonSchema(description = "Ascend and descend acceleration")
         var elevationSnappiness = 1.0
 
-        // Allow Eureka controlled ships to be affected by fluid drag
-        @JsonSchema(description = "Allow Eureka controlled ships to be affected by fluid drag")
+        // Allow Engine controlled ships to be affected by fluid drag
+        @JsonSchema(description = "Allow Engine controlled ships to be affected by fluid drag")
         var doFluidDrag = false
 
         // Do i need to explain? the mass 1 baloon gets to float
@@ -99,7 +99,7 @@ object EngineConfig {
 
         // Anti-velocity mass relevance when stopping the ship
         // Max 10.0 (means no mass irrelevance)
-        @JsonSchema(description = "How much inertia affects Eureka ships. Max 10 = full inertia")
+        @JsonSchema(description = "How much inertia affects Engine ships. Max 10 = full inertia")
         var antiVelocityMassRelevance = 0.8
 
         // Chance that if side will pop, its this chance per side
@@ -201,6 +201,6 @@ object EngineConfig {
         val allowDisassembly = true
 
         @JsonSchema(description = "Maximum number of blocks allowed in a ship. Set to 0 for no limit")
-        val maxShipBlocks = 32*32*32
+        val maxShipBlocks = 320*320*320
     }
 }

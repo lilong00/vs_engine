@@ -1,7 +1,6 @@
 package org.valkyrienskies.engine.util
 
 import com.google.common.collect.Sets
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.server.level.ServerLevel
@@ -16,7 +15,6 @@ import org.valkyrienskies.core.impl.datastructures.DenseBlockPosSet
 import org.valkyrienskies.core.impl.game.ships.ShipObjectServer
 import org.valkyrienskies.core.impl.networking.simple.sendToClient
 import org.valkyrienskies.core.impl.util.logger
-import org.valkyrienskies.engine.EngineConfig
 import org.valkyrienskies.mod.common.assembly.createNewShipWithBlocks
 import org.valkyrienskies.mod.common.executeIf
 import org.valkyrienskies.mod.common.isTickingChunk
@@ -33,21 +31,62 @@ import kotlin.math.round
 import kotlin.math.sign
 
 object ShipAssembler {
-    fun collectBlocks(level: ServerLevel, center: BlockPos, predicate: (BlockState) -> Boolean): ServerShip? {
-        val blocks = DenseBlockPosSet()
+    // 收集范围内的方块
+fun collectBlocksInRange(
+    level: ServerLevel,
+    center: BlockPos,
+    range_y: Int,
+    range_y_: Int,
+    range_z: Int,
+    range_z_: Int,
+    range_x: Int,
+    range_x_: Int,
+    axis: Direction.Axis,
+    predicate: (BlockState) -> Boolean,
+    shipSteeringDirection: Direction
+): ServerShip? {
+    val blocks = DenseBlockPosSet()
 
-        blocks.add(center.toJOML())
-        val result = bfs(level, center, blocks, predicate)
-        if (result) {
-            return createNewShipWithBlocks(center, blocks, level)
-        } else {
-            return null
+    for (x in center.x - range_z..center.x + range_z_) {
+        for (y in center.y - range_y_..center.y + range_y) {
+            for (z in center.z - range_x_..center.z + range_x) {
+                // 根据轴方向调整坐标值
+                val pos = when (axis) {
+                    Direction.Axis.X -> BlockPos(x, y, z)
+                    Direction.Axis.Z -> BlockPos(x, y, z)
+                    Direction.Axis.Y -> BlockPos(x, z, y)
+                }
+
+                // 根据船舵的朝向调整坐标值
+                val adjustedPos = when (shipSteeringDirection) {
+                    Direction.SOUTH -> BlockPos(center.x - (pos.x - center.x), pos.y, center.z + (pos.z - center.z))
+                    Direction.NORTH -> BlockPos(center.x + (pos.x - center.x), pos.y, center.z - (pos.z - center.z))
+                    Direction.EAST -> BlockPos(center.x + (pos.z - center.z), pos.y, center.z + (pos.x - center.x))
+                    Direction.WEST -> BlockPos(center.x - (pos.z - center.z), pos.y, center.z - (pos.x - center.x))
+                    else -> pos
+                }
+
+                val state = level.getBlockState(adjustedPos)
+                if (predicate(state)) {
+                    blocks.add(adjustedPos.toJOML())
+                }
+            }
         }
     }
 
+    return if (blocks.isNotEmpty()) {
+        createNewShipWithBlocks(center, blocks, level)
+    } else {
+        null
+    }
+}
+
+
+    // 将数字四舍五入到最接近的倍数
     private fun roundToNearestMultipleOf(number: Double, multiple: Double) = multiple * round(number / multiple)
 
-    // modified from https://gamedev.stackexchange.com/questions/83601/from-3d-rotation-snap-to-nearest-90-directions
+    // 根据 https://gamedev.stackexchange.com/questions/83601/from-3d-rotation-snap-to-nearest-90-directions 修改
+    // 将旋转角度调整到最接近的90度方向
     private fun snapRotation(direction: AxisAngle4d): AxisAngle4d {
         val x = abs(direction.x)
         val y = abs(direction.y)
@@ -63,11 +102,12 @@ object ShipAssembler {
         }
     }
 
+    // 解除船只的填充状态
     fun unfillShip(level: ServerLevel, ship: ServerShip, direction: Direction, shipCenter: BlockPos, center: BlockPos) {
         ship as ShipObjectServer
         ship.shipData.isStatic = true
 
-        // ship's rotation rounded to nearest 90*
+        // 船只的旋转角度四舍五入到最接近的90度
         val shipToWorld = ship.transform.run {
             Matrix4d()
                 .translate(positionInWorld)
@@ -79,8 +119,8 @@ object ShipAssembler {
 
         val alloc0 = Vector3d()
 
-        // Direction comes from direction ship is aligning to
-        // We can assume that the ship in shipspace is always facing north, because it has to be
+        // 方向来自船只对齐的方向
+        // 我们可以假设船只在船只空间中总是面向北方，因为它必须如此
         val rotation: Rotation = when (direction) {
             Direction.SOUTH -> Rotation.NONE // Bug in Direction.from2DDataValue() can return south/north as opposite
             Direction.NORTH -> Rotation.CLOCKWISE_180
@@ -102,8 +142,8 @@ object ShipAssembler {
         val chunkPoses = chunkPairs.flatMap { it.toList() }
         val chunkPosesJOML = chunkPoses.map { it.toJOML() }
 
-        // Send a list of all the chunks that we plan on updating to players, so that they
-        // defer all updates until assembly is finished
+        // 将我们计划更新的所有块的列表发送给玩家，以便他们
+        // 延迟所有更新，直到装配完成
         level.players().forEach { player ->
             PacketStopChunkUpdates(chunkPosesJOML).sendToClient(player.playerWrapper)
         }
@@ -136,70 +176,21 @@ object ShipAssembler {
                 }
             }
         }
-        // We update the blocks after they're set to prevent blocks from breaking
+        // 我们在设置块后更新它们，以防止块破裂
         for (triple in toUpdate) {
             updateBlock(level, triple.first, triple.second, triple.third)
         }
 
         level.server.executeIf(
-            // This condition will return true if all modified chunks have been both loaded AND
-            // chunk update packets were sent to players
+            // 如果所有修改的块都已加载并且
+            // 块更新数据包已发送给玩家，此条件将返回true
             { chunkPoses.all(level::isTickingChunk) }
         ) {
-            // Once all the chunk updates are sent to players, we can tell them to restart chunk updates
+            // 一旦所有的块更新都发送给玩家，我们就可以告诉他们重新开始块更新
             level.players().forEach { player ->
                 PacketRestartChunkUpdates(chunkPosesJOML).sendToClient(player.playerWrapper)
             }
         }
     }
-
-    private fun bfs(
-        level: ServerLevel,
-        start: BlockPos,
-        blocks: DenseBlockPosSet,
-        predicate: (BlockState) -> Boolean
-    ): Boolean {
-
-        val blacklist = DenseBlockPosSet()
-        val stack = ObjectArrayList<BlockPos>()
-
-        directions(start) { stack.push(it) }
-
-        while (!stack.isEmpty) {
-            val pos = stack.pop()
-
-            if (predicate(level.getBlockState(pos))) {
-                blocks.add(pos.x, pos.y, pos.z)
-                directions(pos) {
-                    if (!blacklist.contains(it.x, it.y, it.z)) {
-                        blacklist.add(it.x, it.y, it.z)
-                        stack.push(it)
-                    }
-                }
-            }
-            if ((EngineConfig.SERVER.maxShipBlocks > 0) and (blocks.size > EngineConfig.SERVER.maxShipBlocks)) {
-                logger.info("Stopped ship assembly due too many blocks")
-                return false
-            }
-        }
-        if (EngineConfig.SERVER.maxShipBlocks > 0){
-            logger.info("Assembled ship with ${blocks.size} blocks, out of ${EngineConfig.SERVER.maxShipBlocks} allowed")
-        }
-        return true
-    }
-
-    private fun directions(center: BlockPos, lambda: (BlockPos) -> Unit) {
-        if (!EngineConfig.SERVER.diagonals) Direction.values().forEach { lambda(center.relative(it)) }
-        for (x in -1..1) {
-            for (y in -1..1) {
-                for (z in -1..1) {
-                    if (x != 0 || y != 0 || z != 0) {
-                        lambda(center.offset(x, y, z))
-                    }
-                }
-            }
-        }
-    }
-
     private val logger by logger()
 }
