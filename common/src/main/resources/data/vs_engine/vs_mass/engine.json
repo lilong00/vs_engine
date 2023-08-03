@@ -1,0 +1,14 @@
+[
+  {
+    "block": "vs_engine:ship_helm",
+    "mass": 350.0
+  },
+  {
+    "block": "vs_engine:engine",
+    "mass": 3200.0
+  },
+  {
+    "block": "vs_engine:anchor",
+    "mass": 8840.0
+  }
+]

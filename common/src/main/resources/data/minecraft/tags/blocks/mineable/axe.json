@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "vs_engine:floater",
+    "#vs_engine:ship_helms"
+  ]
+}

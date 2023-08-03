@@ -1,0 +1,18 @@
+{
+  "itemGroup.vs_engine.engine_tab": "VS Engine",
+  "block.vs_engine.oak_ship_helm": "Oak Ship Helm",
+  "block.vs_engine.anchor": "Anchor",
+  "block.vs_engine.engine": "Ship Engine",
+  "block.vs_engine.balloon": "Balloon",
+  "block.vs_engine.floater": "Floater",
+  "block.vs_engine.ballast": "Ballast",
+  "gui.vs_engine.ship_helm": "Ship Helm",
+  "gui.vs_engine.engine": "Engine",
+  "gui.vs_engine.assemble": "Assemble",
+  "gui.vs_engine.disassemble": "Disassemble",
+  "gui.vs_engine.align": "Align",
+  "gui.vs_engine.aligning": "Aligning...",
+  "gui.vs_engine.todo": "Disassemble",
+  "hud.vs_engine.start_cruising": "Cruise control enabled",
+  "hud.vs_engine.stop_cruising": "Cruise control disabled"
+}

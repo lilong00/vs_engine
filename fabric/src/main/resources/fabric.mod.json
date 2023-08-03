@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "vs_engine",
+  "version": "${version}",
+  "name": "VS Engine Mod",
+  "description": "Basically Archimedes Ships, but with VS2 as the backend!",
+  "authors": [
+    "ewoudje",
+    "Tri0de",
+    "Rubydesic"
+  ],
+  "contributors": [
+    "Copper",
+    "Anarava",
+    "VS Discord"
+  ],
+  "contact": {
+    "homepage": "https://valkyrienskies.org/",
+    "sources": "https://github.com/ValkyrienSkies/Eureka"
+  },
+  "license": "Apache-2.0",
+  "icon": "icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "org.valkyrienskies.engine.fabric.EngineModFabric"
+    ],
+    "client": [
+      "org.valkyrienskies.engine.fabric.EngineModFabric${'$'}Client"
+    ],
+    "preLaunch": [
+      "org.valkyrienskies.engine.fabric.ValkyrienPreLaunch"
+    ],
+    "modmenu": [
+      "org.valkyrienskies.engine.fabric.EngineModFabric${'$'}ModMenu"
+    ]
+  },
+  "mixins": [
+    "vs_engine-common.mixins.json",
+    "vs_engine.mixins.json"
+  ],
+  "depends": {
+    "minecraft": ">=1.18.2",
+    "valkyrienskies": ">=${vs2_version}"
+  }
+}

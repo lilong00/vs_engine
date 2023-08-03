@@ -1,0 +1,22 @@
+{
+  "replace": false,
+  "values": [
+    "vs_engine:balloon",
+    "vs_engine:white_balloon",
+    "vs_engine:light_gray_balloon",
+    "vs_engine:gray_balloon",
+    "vs_engine:black_balloon",
+    "vs_engine:red_balloon",
+    "vs_engine:orange_balloon",
+    "vs_engine:yellow_balloon",
+    "vs_engine:lime_balloon",
+    "vs_engine:green_balloon",
+    "vs_engine:light_blue_balloon",
+    "vs_engine:cyan_balloon",
+    "vs_engine:blue_balloon",
+    "vs_engine:purple_balloon",
+    "vs_engine:magenta_balloon",
+    "vs_engine:pink_balloon",
+    "vs_engine:brown_balloon"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "vs_engine:block/engine",
+  "textures": {
+    "front": "vs_engine:block/engine_front_on_1"
+  }
+}

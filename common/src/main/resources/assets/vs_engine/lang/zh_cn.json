@@ -1,0 +1,18 @@
+{
+  "itemGroup.vs_engine.engine_tab": "瓦尔基里天空：引擎",
+  "block.vs_engine.oak_ship_helm": "橡木船舵",
+  "block.vs_engine.anchor": "锚",
+  "block.vs_engine.engine": "船舶引擎",
+  "block.vs_engine.balloon": "气球",
+  "block.vs_engine.floater": "浮子",
+  "block.vs_engine.ballast": "压载",
+  "gui.vs_engine.ship_helm": "船舵",
+  "gui.vs_engine.engine": "引擎",
+  "gui.vs_engine.assemble": "组装",
+  "gui.vs_engine.disassemble": "拆解",
+  "gui.vs_engine.align": "对齐",
+  "gui.vs_engine.aligning": "对齐中……",
+  "gui.vs_engine.todo": "拆解",
+  "hud.vs_engine.start_cruising": "启用巡航控制",
+  "hud.vs_engine.stop_cruising": "禁用巡航控制"
+}
