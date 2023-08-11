@@ -18,15 +18,8 @@ object EngineBlockEntities {
     private val BLOCKENTITIES = DeferredRegister.create(EngineMod.MOD_ID, Registry.BLOCK_ENTITY_TYPE_REGISTRY)
 
     val SHIP_HELM = setOf(
-        EngineBlocks.OAK_SHIP_HELM,
-        /*EngineBlocks.SPRUCE_SHIP_HELM,
-        EngineBlocks.BIRCH_SHIP_HELM,
-        EngineBlocks.JUNGLE_SHIP_HELM,
-        EngineBlocks.ACACIA_SHIP_HELM,
-        EngineBlocks.DARK_OAK_SHIP_HELM,
-        EngineBlocks.CRIMSON_SHIP_HELM,
-        EngineBlocks.WARPED_SHIP_HELM*/
-    ) withBE ::ShipHelmBlockEntity byName "ship_helm"
+        EngineBlocks.ASSEMBLYCORE
+    ) withBE ::ShipHelmBlockEntity byName "assemblycore"
 
     val ENGINE = EngineBlocks.ENGINE withBE ::EngineBlockEntity byName "engine"
 

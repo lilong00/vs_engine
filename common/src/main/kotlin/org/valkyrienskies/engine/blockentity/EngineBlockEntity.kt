@@ -226,5 +226,4 @@ class EngineBlockEntity(pos: BlockPos, state: BlockState) :
         index == 0 && AbstractFurnaceBlockEntity.isFuel(stack)
 
     override fun fillStackedContents(helper: StackedContents) = helper.accountStack(fuel)
-    // endregion Container Stuff
 }

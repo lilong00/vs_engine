@@ -32,23 +32,6 @@ class ThrusterBlock : DirectionalBlock(Properties.of(Material.BAMBOO)) {
         return RenderShape.MODEL
     }
 
-    override fun onPlace(state: BlockState, level: Level, pos: BlockPos, oldState: BlockState, isMoving: Boolean) {
-        super.onPlace(state, level, pos, oldState, isMoving)
-
-        if (level.isClientSide) return
-        level as ServerLevel
-        val ship = level.getShipObjectManagingPos(pos) ?: level.getShipManagingPos(pos) ?: return
-        ThrusterShipControl.getOrCreate(ship).addFarter(pos, state.getValue(FACING))
-    }
-
-    override fun onRemove(state: BlockState, level: Level, pos: BlockPos, newState: BlockState, isMoving: Boolean) {
-        super.onRemove(state, level, pos, newState, isMoving)
-
-        if (level.isClientSide) return
-        level as ServerLevel
-        level.getShipManagingPos(pos)?.getAttachment<ThrusterShipControl>()?.removeFarter(pos, state.getValue(FACING))
-    }
-
     override fun getStateForPlacement(ctx: BlockPlaceContext): BlockState {
         return defaultBlockState()
             .setValue(FACING, ctx.nearestLookingDirection.opposite)
@@ -70,6 +53,25 @@ class ThrusterBlock : DirectionalBlock(Properties.of(Material.BAMBOO)) {
             val y2 = y + random.nextDouble() * 0.2 - 0.1
             val z2 = z + random.nextDouble() * 0.2 - 0.1
             //level.addParticle(ParticleTypes.CAMPFIRE_COSY_SMOKE, x2, y2, z2, speedX, speedY, speedZ)
+        }
+    }
+
+    override fun neighborChanged(
+        state: BlockState,
+        level: Level,
+        pos: BlockPos,
+        neighborBlock: Block,
+        fromPos: BlockPos,
+        moving: Boolean
+    ) {
+        super.neighborChanged(state, level, pos, neighborBlock, fromPos, moving)
+        if (level.getBestNeighborSignal(pos) > 0) {
+            level as ServerLevel
+            val ship = level.getShipObjectManagingPos(pos) ?: level.getShipManagingPos(pos) ?: return
+            ThrusterShipControl.getOrCreate(ship).addFarter(pos, state.getValue(FACING))
+        } else {
+            level as ServerLevel
+            level.getShipManagingPos(pos)?.getAttachment<ThrusterShipControl>()?.removeFarter(pos, state.getValue(FACING))
         }
     }
 }

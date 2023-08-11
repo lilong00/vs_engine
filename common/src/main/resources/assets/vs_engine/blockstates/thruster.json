@@ -1,0 +1,28 @@
+{
+	"variants": {
+		"facing=north": {
+			"model": "vs_engine:block/thruster",
+			"y": 180
+		},
+		"facing=east": {
+			"model": "vs_engine:block/thruster",
+			"y": 270
+		},
+		"facing=south": {
+			"model": "vs_engine:block/thruster",
+			"y": 0
+		},
+		"facing=west": {
+			"model": "vs_engine:block/thruster",
+			"y": 90
+		},
+		"facing=up": {
+			"model": "vs_engine:block/thruster",
+			"x": 90
+		},
+		"facing=down": {
+			"model": "vs_engine:block/thruster",
+			"x": 270
+		}
+	}
+}

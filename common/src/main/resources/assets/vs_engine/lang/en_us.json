@@ -1,6 +1,6 @@
 {
   "itemGroup.vs_engine.engine_tab": "VS Engine",
-  "block.vs_engine.oak_ship_helm": "Oak Ship Helm",
+  "block.vs_engine.assemblycore": "AssemblyCore",
   "block.vs_engine.anchor": "Anchor",
   "block.vs_engine.engine": "Ship Engine",
   "block.vs_engine.balloon": "Balloon",
@@ -8,6 +8,7 @@
   "block.vs_engine.ballast": "Ballast",
   "block.vs_engine.gyros": "Gyros",
   "block.vs_engine.controllers": "controllers",
+  "block.vs_engine.thruster": "thruster",
   "gui.vs_engine.ship_helm": "Ship Helm",
   "gui.vs_engine.engine": "Engine",
   "gui.vs_engine.assemble": "Assemble",

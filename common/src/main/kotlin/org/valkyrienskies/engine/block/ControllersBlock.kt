@@ -1,5 +1,6 @@
 package org.valkyrienskies.engine.block
 
+import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.network.chat.TextComponent
@@ -24,11 +25,13 @@ import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.shapes.CollisionContext
 import net.minecraft.world.phys.shapes.VoxelShape
 import org.valkyrienskies.engine.blockentity.ShipHelmBlockEntity
+import org.valkyrienskies.engine.ship.ThrusterShipControl
 import org.valkyrienskies.engine.util.DirectionalShape
 import org.valkyrienskies.engine.util.RotShapes
+import org.valkyrienskies.mod.common.entity.ShipMountingEntity
 import org.valkyrienskies.mod.common.getShipManagingPos
 
-class ControllersBlock (properties: Properties, val woodType: WoodType) : BaseEntityBlock(properties){
+class ControllersBlock (properties: Properties) : BaseEntityBlock(properties){
     // 定义船舵的基座形状
     val HELM_BASE = RotShapes.box(0.0, 0.0, 0.0, 16.0, 16.0, 16.0)
 
@@ -41,29 +44,31 @@ class ControllersBlock (properties: Properties, val woodType: WoodType) : BaseEn
     }
 
     // 当块被使用时的操作
-    // 当块被使用时的操作
-override fun use(
-    state: BlockState,
-    level: Level,
-    pos: BlockPos,
-    player: Player,
-    hand: InteractionHand,
-    blockHitResult: BlockHitResult
-): InteractionResult {
-    // 如果是在客户端，直接返回成功
-    if (level.isClientSide) return InteractionResult.SUCCESS
-    // 获取块实体
-    val blockEntity = level.getBlockEntity(pos) as ShipHelmBlockEntity
+    override fun use(
+        state: BlockState,
+        level: Level,
+        pos: BlockPos,
+        player: Player,
+        hand: InteractionHand,
+        blockHitResult: BlockHitResult
+    ): InteractionResult {
+        // 如果是在客户端，直接返回成功
+        if (level.isClientSide) return InteractionResult.SUCCESS
+        // 获取块实体
+        val blockEntity = level.getBlockEntity(pos) as ShipHelmBlockEntity
 
-    // 如果当前位置没有船只管理，提示玩家潜行打开船舵
-    if (level.getShipManagingPos(pos) == null) {
-        player.displayClientMessage(TextComponent("Sneak to open the ship helm!"), true)
-        return InteractionResult.CONSUME
+        // 如果玩家正在进行次要操作（例如潜行），则返回PASS
+        if (player.isSecondaryUseActive) {
+            return InteractionResult.PASS
+        }
+
+        // 尝试让玩家坐下
+        if (blockEntity.sit(player)) {
+            return InteractionResult.CONSUME
+        }
+
+        return InteractionResult.PASS
     }
-    // 如果玩家可以坐在船舵上，消耗操作
-    // 其他情况，不做任何操作
-    else return InteractionResult.PASS
-}
 
     // 获取渲染形状
     override fun getRenderShape(blockState: BlockState): RenderShape {

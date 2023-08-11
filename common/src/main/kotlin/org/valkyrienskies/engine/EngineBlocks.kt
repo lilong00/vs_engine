@@ -23,30 +23,26 @@ object EngineBlocks {
     val FLOATER = BLOCKS.register("floater", ::FloaterBlock)
     val BALLAST = BLOCKS.register("ballast", ::BallastBlock)
 
-    //val FARTER = BLOCKS.register("BaseThruster", ::ThrusterBlock)
-    val FARTER = BLOCKS.register("farter", ::ThrusterBlock)
-    //val ATMOSPHEREENGINE = BLOCKS.register("AtmosphereEngine", ::AtmosphereEngineBock)
+    val THRUSTER = BLOCKS.register("thruster", ::ThrusterBlock)
 
     //陀螺仪
     val GYROS = BLOCKS.register("gyros", ::GyrosBlock)
 
     //驾驶控制器
-    val CORE = BLOCKS.register("controllers") {
+    val CONTROLLERS = BLOCKS.register("controllers") {
         ControllersBlock(
             BlockBehaviour.Properties.of(Material.WOOD).strength(2.5F).sound(SoundType.WOOD),
-            WoodType.OAK
         )
     }
 
-    // region Ship Helms
-    val OAK_SHIP_HELM = BLOCKS.register("oak_ship_helm") {
-        ShipHelmBlock(
+    //组装器
+    val ASSEMBLYCORE = BLOCKS.register("assemblycore") {
+        AssemblyCoreBlock(
             BlockBehaviour.Properties.of(Material.WOOD).strength(2.5F).sound(SoundType.WOOD),
-            WoodType.OAK
         )
     }
 
-    // region Balloons
+    //气球
     val BALLOON = BLOCKS.register("balloon") {
         BalloonBlock(
             BlockBehaviour.Properties.of(Material.WOOL, MaterialColor.WOOL).sound(SoundType.WOOL)
@@ -70,7 +66,7 @@ object EngineBlocks {
     }
 
     fun makeFlammables() {
-        flammableBlock(OAK_SHIP_HELM.get(), 5, 20)
+        flammableBlock(ASSEMBLYCORE.get(), 5, 20)
         flammableBlock(BALLOON.get(), 30, 60)
         flammableBlock(FLOATER.get(), 5, 20)
     }

@@ -16,7 +16,7 @@ object EngineItems {
             EngineMod.MOD_ID,
             "engine_tab"
         )
-    ) { ItemStack(EngineBlocks.OAK_SHIP_HELM.get()) }
+    ) { ItemStack(EngineBlocks.ASSEMBLYCORE.get()) }
 
     fun register() {
         EngineBlocks.registerItems(ITEMS)

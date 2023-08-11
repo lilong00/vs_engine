@@ -51,7 +51,6 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
     // 物理消耗
     private var physConsumption = 0f
 
-    private val farters = mutableListOf<Pair<Vector3i, Direction>>()
     // 锚定状态
     private val anchored get() = anchorsActive > 0
 
@@ -120,7 +119,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
         // 当舵存在时，禁用流体阻力，因为它使船难以驾驶
         physShip.doFluidDrag = EngineConfig.SERVER.doFluidDrag
 
-        val forcesApplier = physShip
+        //val forcesApplier = physShip
 
         physShip as PhysShipImpl
 
@@ -184,7 +183,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
         // 结束对齐区域
 
         // 稳定化
-        /*stabilize(
+        stabilize(
             physShip,
             omega,
             vel,
@@ -192,7 +191,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
             physShip,
             controllingPlayer == null && !aligning,
             controllingPlayer == null
-        )*/
+        )
 
         var idealUpwardVel = Vector3d(0.0, 0.0, 0.0)
 

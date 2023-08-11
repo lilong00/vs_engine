@@ -60,21 +60,21 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
 
         // 添加组装按钮
         assembleButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_1_X, y + BUTTON_1_Y, 156, 23, ASSEMBLE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_1_X, y + BUTTON_1_Y, 56, 23, ASSEMBLE_TEXT, font) {
                 minecraft?.gameMode?.handleInventoryButtonClick(menu.containerId, 0)
             }
         )
 
         // 添加对齐按钮
         alignButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_2_X, y + BUTTON_2_Y, 156, 23, ALIGN_TEXT, font) {
+            ShipHelmButton(x + BUTTON_2_X, y + BUTTON_2_Y, 56, 23, ALIGN_TEXT, font) {
                 minecraft?.gameMode?.handleInventoryButtonClick(menu.containerId, 1)
             }
         )
 
         // 添加拆解按钮
         disassembleButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_3_X, y + BUTTON_3_Y, 156, 23,TODO_TEXT, font) {
+            ShipHelmButton(x + BUTTON_3_X, y + BUTTON_3_Y, 56, 23,TODO_TEXT, font) {
                 minecraft?.gameMode?.handleInventoryButtonClick(menu.containerId, 3)
             }
         )
@@ -84,7 +84,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         updateButtons()
 
         NorthincreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_4_X, y + BUTTON_4_Y, 13,23, INCREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_4_X, y + BUTTON_4_Y, 23,13, INCREASE_TEXT, font) {
                 if (North < 96) {
                     North++
                     GUINorth = North()
@@ -93,7 +93,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         )
 
         NorthdecreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_5_X, y + BUTTON_5_Y, 13, 23,DECREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_5_X, y + BUTTON_5_Y, 23, 13,DECREASE_TEXT, font) {
                 if (North > 0) {
                     North--
                     GUINorth = North()
@@ -102,7 +102,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         )
 
         EastincreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_6_X, y + BUTTON_6_Y, 13, 23, INCREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_6_X, y + BUTTON_6_Y, 23, 13, INCREASE_TEXT, font) {
                 if (East < 96) {
                     East++
                     GUIEast = East()
@@ -111,7 +111,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         )
 
         EastdecreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_7_X, y + BUTTON_7_Y, 13, 23, DECREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_7_X, y + BUTTON_7_Y, 23, 13, DECREASE_TEXT, font) {
                 if (East > 0) {
                     East--
                     GUIEast = East()
@@ -120,7 +120,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         )
 
         SouthincreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_8_X, y + BUTTON_8_Y, 13, 23, INCREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_8_X, y + BUTTON_8_Y, 23, 13, INCREASE_TEXT, font) {
                 if (South < 96) {
                     South++
                     GUISouth = South()
@@ -129,7 +129,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         )
 
         SouthdecreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_9_X, y + BUTTON_9_Y, 13, 23, DECREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_9_X, y + BUTTON_9_Y, 23, 13, DECREASE_TEXT, font) {
                 if (South > 0) {
                     South--
                     GUISouth = South()
@@ -138,7 +138,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         )
 
         WestincreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_10_X, y + BUTTON_10_Y, 13, 23, INCREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_10_X, y + BUTTON_10_Y, 23, 13, INCREASE_TEXT, font) {
                 if (West < 96) {
                     West++
                     GUIWest = West()
@@ -147,7 +147,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         )
 
         WestdecreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_11_X, y + BUTTON_11_Y, 13, 23, DECREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_11_X, y + BUTTON_11_Y, 23, 13, DECREASE_TEXT, font) {
                 if (West > 0) {
                     West--
                     GUIWest = West()
@@ -156,7 +156,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         )
 
         UpincreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_12_X, y + BUTTON_12_Y, 13, 23, INCREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_12_X, y + BUTTON_12_Y, 23, 13, INCREASE_TEXT, font) {
                 if (Up < 96) {
                     Up++
                     GUIUp = Up()
@@ -165,7 +165,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         )
 
         UpeddecreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_13_X, y + BUTTON_13_Y, 13, 23, DECREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_13_X, y + BUTTON_13_Y, 23, 13, DECREASE_TEXT, font) {
                 if (Up > 0) {
                     Up--
                     GUIUp = Up()
@@ -174,7 +174,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         )
 
         DownincreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_14_X, y + BUTTON_14_Y, 13, 23, INCREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_14_X, y + BUTTON_14_Y, 23, 13, INCREASE_TEXT, font) {
                 if (Down < 96) {
                     Down++
                     GUIDown = Down()
@@ -183,7 +183,7 @@ class ShipHelmScreen(handler: ShipHelmScreenMenu, playerInventory: Inventory, te
         )
 
         DowndecreaseButton = addRenderableWidget(
-            ShipHelmButton(x + BUTTON_15_X, y + BUTTON_15_Y, 13, 23, DECREASE_TEXT, font) {
+            ShipHelmButton(x + BUTTON_15_X, y + BUTTON_15_Y, 23, 13, DECREASE_TEXT, font) {
                 if (Down > 0) {
                     Down--
                     GUIDown = Down()

@@ -26,7 +26,7 @@ import org.valkyrienskies.core.impl.api.shipValue
 import org.valkyrienskies.core.impl.util.logger
 import org.valkyrienskies.engine.EngineBlockEntities
 import org.valkyrienskies.engine.EngineConfig
-import org.valkyrienskies.engine.block.ShipHelmBlock
+import org.valkyrienskies.engine.block.AssemblyCoreBlock
 import org.valkyrienskies.engine.gui.shiphelm.ShipHelmScreen
 import org.valkyrienskies.engine.gui.shiphelm.ShipHelmScreenMenu
 import org.valkyrienskies.engine.ship.EngineShipControl
@@ -138,7 +138,7 @@ class ShipHelmBlockEntity(pos: BlockPos, state: BlockState) :
 
         // 检查组装之前的方块状态，以避免创建空船
         val blockState = level.getBlockState(blockPos)
-        if (blockState.block !is ShipHelmBlock) return
+        if (blockState.block !is AssemblyCoreBlock) return
 
         val direction = blockState.getValue(HORIZONTAL_FACING)
         val axis = when (direction) {
@@ -222,18 +222,12 @@ class ShipHelmBlockEntity(pos: BlockPos, state: BlockState) :
 
     // 坐下
     fun sit(player: Player, force: Boolean = false): Boolean {
-        // 如果玩家已经在控制船只，打开舵盘菜单
-        if (!force && player.vehicle?.type == ValkyrienSkiesMod.SHIP_MOUNTING_ENTITY_TYPE && seats.contains(player.vehicle as ShipMountingEntity))
-        {
-            player.openMenu(this);
+        // 如果玩家已经在控制船只，不允许打开GUI
+        if (!force && player.vehicle?.type == ValkyrienSkiesMod.SHIP_MOUNTING_ENTITY_TYPE && seats.contains(player.vehicle as ShipMountingEntity)) {
             return true;
         }
 
-        //val seat = spawnSeat(blockPos, blockState, level as ServerLevel)
-        //control?.seatedPlayer = player
-        //return player.startRiding(seat, force)
         return startRiding(player, force, blockPos, blockState, level as ServerLevel)
-
     }
 
     fun tick() {

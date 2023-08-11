@@ -1,6 +1,6 @@
 {
   "itemGroup.vs_engine.engine_tab": "瓦尔基里天空：引擎",
-  "block.vs_engine.oak_ship_helm": "橡木船舵",
+  "block.vs_engine.assemblycore": "组装核心",
   "block.vs_engine.anchor": "锚",
   "block.vs_engine.engine": "船舶引擎",
   "block.vs_engine.balloon": "气球",
@@ -8,6 +8,7 @@
   "block.vs_engine.ballast": "压载",
   "block.vs_engine.gyros": "陀螺仪",
   "block.vs_engine.controllers": "控制器",
+  "block.vs_engine.thruster": "推进器",
   "gui.vs_engine.ship_helm": "控制器",
   "gui.vs_engine.engine": "引擎",
   "gui.vs_engine.assemble": "组装",
