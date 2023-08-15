@@ -57,7 +57,7 @@ fun stabilize(
     forces.applyInvariantTorque(stabilizationTorque)  // 应用不变扭矩
 
     if (linear) {
-        val idealVelocity = Vector3d(vel).negate()  // 理想速度
+        val idealVelocity = Vector3d(vel).negate()  // 理想-+速度
         idealVelocity.y = 0.0
 
         if (idealVelocity.lengthSquared() > (EngineConfig.SERVER.linearStabilizeMaxAntiVelocity * EngineConfig.SERVER.linearStabilizeMaxAntiVelocity))

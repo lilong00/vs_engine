@@ -139,19 +139,6 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
 
         // 设置物理船的浮力因子
         physShip.buoyantFactor = 1.0 + floaters * buoyantFactorPerFloater
-        // 重新访问引擎控制代码
-        // [x] 移动扭矩稳定化代码
-        // [x] 移动线性稳定化代码
-        // [x] 重新访问玩家控制的扭矩
-        // [x] 重新访问玩家控制的线性力
-        // [x] 锚定冻结
-        // [x] 重写对齐代码
-        // [x] 重新访问升降代码
-        // [x] 气球限制器
-        // [ ] 添加巡航代码
-        // [ ] 基于船大小的旋转
-        // [x] 引擎消耗
-        // [ ] 修复升降灵敏度
 
         // 对齐区域
 
@@ -181,17 +168,6 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
             physShip.applyInvariantTorque(idealTorque)
         }
         // 结束对齐区域
-
-        // 稳定化
-        stabilize(
-            physShip,
-            omega,
-            vel,
-            segment,
-            physShip,
-            controllingPlayer == null && !aligning,
-            controllingPlayer == null
-        )
 
         var idealUpwardVel = Vector3d(0.0, 0.0, 0.0)
 
@@ -229,7 +205,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
 
 
         controlData?.let { control ->
-            // 区域 玩家控制的旋转
+            // 区域 玩家控制的左右旋转
             val transform = physShip.transform
             val aabb = ship.worldAABB
             val center = transform.positionInWorld
@@ -247,11 +223,10 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
             }.coerceIn(0.5, EngineConfig.SERVER.maxSizeForTurnSpeedPenalty)
 
             val maxLinearAcceleration = EngineConfig.SERVER.turnAcceleration
+
             val maxLinearSpeed = EngineConfig.SERVER.turnSpeed +
                     extraForce / EngineConfig.SERVER.enginePower * EngineConfig.SERVER.engineTurnPower
 
-            // acceleration = alpha * r
-            // 因此: maxAlpha = maxAcceleration / r
             val maxOmegaY = maxLinearSpeed / largestDistance
             val maxAlphaY = maxLinearAcceleration / largestDistance
 
@@ -271,7 +246,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
             physShip.applyInvariantTorque(torque)
             // 结束区域
 
-            // 区域 玩家控制的倾斜
+            // 区域 玩家控制的前后
             val rotationVector = control.seatInDirection.normal.toJOMLD()
 
             physShip.poseVel.transformDirection(rotationVector)
@@ -295,7 +270,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
             )
 
             physShip.applyInvariantTorque(rotationVector)
-            
+
             val forwardVector = control.seatInDirection.normal.toJOMLD()
             SegmentUtils.transformDirectionWithoutScale(
                 physShip.poseVel,
@@ -314,11 +289,11 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
 
             // 这是船只总是可以出去的速度，没有引擎
             val baseForwardVel = Vector3d(forwardVector).mul(EngineConfig.SERVER.baseSpeed)
-            val baseForwardForce = Vector3d(baseForwardVel).sub(velOrthogonalToPlayerUp).mul(mass * 10)
+            val baseForwardForce = Vector3d(baseForwardVel).sub(velOrthogonalToPlayerUp).mul(mass * 0 + balloonForceProvided)
 
             // 这是我们在任何情况下都想去的最大速度（当不冲刺时）
             val idealForwardVel = Vector3d(forwardVector).mul(EngineConfig.SERVER.maxCasualSpeed)
-            val idealForwardForce = Vector3d(idealForwardVel).sub(velOrthogonalToPlayerUp).mul(mass * 10)
+            val idealForwardForce = Vector3d(idealForwardVel).sub(velOrthogonalToPlayerUp).mul(mass * 0 + balloonForceProvided)
 
             val extraForceNeeded = Vector3d(idealForwardForce).sub(baseForwardForce)
             val actualExtraForce = Vector3d(baseForwardForce)
@@ -365,6 +340,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
 
         // 对y分量添加阻力
         physShip.applyInvariantForce(Vector3d(vel.y()).mul(-mass))
+
     }
 
     // 显示巡航状态
@@ -382,9 +358,10 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
         }
 
     // 活动的锚的数量
-    var anchorsActive = 0 
+    var anchorsActive = 0
+
     // 气球的数量
-    var balloons = 0 
+    var balloons = 0
         set(v) {
             field = v; deleteIfEmpty()
         }

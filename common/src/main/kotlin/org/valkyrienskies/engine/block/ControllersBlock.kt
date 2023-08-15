@@ -1,15 +1,15 @@
 package org.valkyrienskies.engine.block
 
-import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
-import net.minecraft.network.chat.TextComponent
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.LevelAccessor
 import net.minecraft.world.level.block.BaseEntityBlock
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.RenderShape
@@ -24,12 +24,14 @@ import net.minecraft.world.level.pathfinder.PathComputationType
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.shapes.CollisionContext
 import net.minecraft.world.phys.shapes.VoxelShape
+import org.valkyrienskies.core.api.ships.getAttachment
 import org.valkyrienskies.engine.blockentity.ShipHelmBlockEntity
-import org.valkyrienskies.engine.ship.ThrusterShipControl
+import org.valkyrienskies.engine.ship.EngineShipControl
 import org.valkyrienskies.engine.util.DirectionalShape
 import org.valkyrienskies.engine.util.RotShapes
-import org.valkyrienskies.mod.common.entity.ShipMountingEntity
+import org.valkyrienskies.mod.common.ValkyrienSkiesMod
 import org.valkyrienskies.mod.common.getShipManagingPos
+import org.valkyrienskies.mod.common.getShipObjectManagingPos
 
 class ControllersBlock (properties: Properties) : BaseEntityBlock(properties){
     // 定义船舵的基座形状
@@ -68,6 +70,34 @@ class ControllersBlock (properties: Properties) : BaseEntityBlock(properties){
         }
 
         return InteractionResult.PASS
+    }
+
+    // 当块被放置时的操作
+    override fun onPlace(state: BlockState, level: Level, pos: BlockPos, oldState: BlockState, isMoving: Boolean) {
+        super.onPlace(state, level, pos, oldState, isMoving)
+
+        if (level.isClientSide) return
+        level as ServerLevel
+
+        val ship = level.getShipObjectManagingPos(pos) ?: level.getShipManagingPos(pos) ?: return
+        EngineShipControl.getOrCreate(ship).helms += 1
+    }
+
+    // 当块被破坏时的操作
+    override fun destroy(level: LevelAccessor, pos: BlockPos, state: BlockState) {
+        super.destroy(level, pos, state)
+
+        if (level.isClientSide) return
+        level as ServerLevel
+
+        level.getShipManagingPos(pos)?.getAttachment<EngineShipControl>()?.let { control ->
+
+            if (control.helms <= 1 && control.seatedPlayer?.vehicle?.type == ValkyrienSkiesMod.SHIP_MOUNTING_ENTITY_TYPE) {
+                control.seatedPlayer!!.unRide()
+                control.seatedPlayer = null
+            }
+            control.helms -= 1
+        }
     }
 
     // 获取渲染形状

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
+import net.minecraft.world.entity.player.Player
 import org.joml.Vector3d
 import org.joml.Vector3dc
 import org.joml.Vector3i
@@ -14,7 +15,10 @@ import org.valkyrienskies.core.api.ships.saveAttachment
 import org.valkyrienskies.core.impl.api.ServerShipUser
 import org.valkyrienskies.core.impl.api.ShipForcesInducer
 import org.valkyrienskies.core.impl.api.Ticked
+import org.valkyrienskies.core.impl.api.shipValue
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
+import org.valkyrienskies.core.impl.pipelines.SegmentUtils
+import org.valkyrienskies.mod.api.SeatedControllingPlayer
 import org.valkyrienskies.mod.common.util.toJOML
 import org.valkyrienskies.mod.common.util.toJOMLD
 
@@ -63,6 +67,7 @@ class ThrusterShipControl : ShipForcesInducer, ServerShipUser, Ticked {  // 推�
                 physShip.applyRotDependentForceToPos(dir.normal.toJOMLD().mul(-10000.0), tPos)
             }
         }
+
     }
 
     private var power = 0.0  // 力量为0.0

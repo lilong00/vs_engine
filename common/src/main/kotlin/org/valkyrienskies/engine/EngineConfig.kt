@@ -54,7 +54,7 @@ object EngineConfig {
 
         // The velocity any ship at least can move at.
         @JsonSchema(description = "The speed a ship with no engines can move at")
-        var baseSpeed = 3.0
+        var baseSpeed = 10.0
 
         // Sensitivity of the up/down impulse buttons.
         // TODO maybe should be moved to VS2 client-side config?
@@ -78,7 +78,7 @@ object EngineConfig {
 
         // The amount of speed that the ship can move at when the left/right impulse button is held down.
         @JsonSchema(description = "The maximum linear velocity at any point on the ship caused by helm torque")
-        var turnSpeed = 3.0
+        var turnSpeed = 6.0
 
         @JsonSchema(description = "The maximum linear acceleration at any point on the ship caused by helm torque")
         var turnAcceleration = 10.0
@@ -108,90 +108,6 @@ object EngineConfig {
 
         // Blacklist of blocks that don't get added for ship building
         @JsonSchema(description = "Blacklist of blocks that don't get assembled")
-        var blockBlacklist = setOf(
-            "vs_engine:ship_helm",
-            "minecraft:dirt",
-            "minecraft:grass_block",
-            "minecraft:grass_path",
-            "minecraft:stone",
-            "minecraft:bedrock",
-            "minecraft:sand",
-            "minecraft:gravel",
-            "minecraft:water",
-            "minecraft:flowing_water",
-            "minecraft:lava",
-            "minecraft:flowing_lava",
-            "minecraft:lily_pad",
-            "minecraft:coarse_dirt",
-            "minecraft:podzol",
-            "minecraft:granite",
-            "minecraft:diorite",
-            "minecraft:andesite",
-            "minecraft:crimson_nylium",
-            "minecraft:warped_nylium",
-            "minecraft:red_sand",
-            "minecraft:sandstone",
-            "minecraft:end_stone",
-            "minecraft:red_sandstone",
-            "minecraft:blackstone",
-            "minecraft:netherrack",
-            "minecraft:soul_sand",
-            "minecraft:soul_soil",
-            "minecraft:grass",
-            "minecraft:fern",
-            "minecraft:dead_bush",
-            "minecraft:seagrass",
-            "minecraft:sea_pickle",
-            "minecraft:kelp",
-            "minecraft:bamboo",
-            "minecraft:dandelion",
-            "minecraft:poppy",
-            "minecraft:blue_orchid",
-            "minecraft:allium",
-            "minecraft:azure_bluet",
-            "minecraft:red_tulip",
-            "minecraft:orange_tulip",
-            "minecraft:white_tulip",
-            "minecraft:pink_tulip",
-            "minecraft:oxeye_daisy",
-            "minecraft:cornflower",
-            "minecraft:lily_of_the_valley",
-            "minecraft:brown_mushroom",
-            "minecraft:red_mushroom",
-            "minecraft:crimson_fungus",
-            "minecraft:warped_fungus",
-            "minecraft:crimson_roots",
-            "minecraft:warped_roots",
-            "minecraft:nether_sprouts",
-            "minecraft:weeping_vines",
-            "minecraft:twisting_vines",
-            "minecraft:chorus_plant",
-            "minecraft:chorus_flower",
-            "minecraft:snow",
-            "minecraft:cactus",
-            "minecraft:vine",
-            "minecraft:sunflower",
-            "minecraft:lilac",
-            "minecraft:rose_bush",
-            "minecraft:peony",
-            "minecraft:tall_grass",
-            "minecraft:large_fern",
-            "minecraft:air",
-            "minecraft:ice",
-            "minecraft:packed_ice",
-            "minecraft:blue_ice",
-            "minecraft:portal",
-            "minecraft:bedrock",
-            "minecraft:end_portal_frame",
-            "minecraft:end_portal",
-            "minecraft:end_gateway",
-            "minecraft:portal"
-        )
-
-        @JsonSchema(description = "Whether the ship helm assembles diagonally connected blocks or not")
-        val diagonals = true
-
-        @JsonSchema(description = "Weight of ballast when lowest redstone power")
         val ballastWeight: Double = 10000.0
 
         @JsonSchema(description = "Weight of ballast when highest redstone power")

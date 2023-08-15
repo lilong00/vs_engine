@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.level.material.Material
 import org.valkyrienskies.core.api.ships.getAttachment
-import org.valkyrienskies.engine.ship.Stabilizer
+import org.valkyrienskies.engine.ship.Gyros
 import org.valkyrienskies.mod.common.ValkyrienSkiesMod
 import org.valkyrienskies.mod.common.getShipManagingPos
 import org.valkyrienskies.mod.common.getShipObjectManagingPos
@@ -40,7 +40,7 @@ class GyrosBlock : Block(
         level as ServerLevel
 
         val ship = level.getShipObjectManagingPos(pos) ?: level.getShipManagingPos(pos) ?: return
-        Stabilizer.getOrCreate(ship).helms += 1
+        Gyros.getOrCreate(ship).helms += 1
     }
 
     // 当块被破坏时的操作
@@ -50,7 +50,7 @@ class GyrosBlock : Block(
         if (level.isClientSide) return
         level as ServerLevel
 
-        level.getShipManagingPos(pos)?.getAttachment<Stabilizer>()?.let { control ->
+        level.getShipManagingPos(pos)?.getAttachment<Gyros>()?.let { control ->
 
             if (control.helms <= 1 && control.seatedPlayer?.vehicle?.type == ValkyrienSkiesMod.SHIP_MOUNTING_ENTITY_TYPE) {
                 control.seatedPlayer!!.unRide()

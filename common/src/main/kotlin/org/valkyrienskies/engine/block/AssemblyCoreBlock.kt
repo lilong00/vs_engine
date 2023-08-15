@@ -45,36 +45,6 @@ import org.valkyrienskies.mod.common.getShipObjectManagingPos
         registerDefaultState(this.stateDefinition.any().setValue(HORIZONTAL_FACING, Direction.NORTH))
     }
 
-       // 当块被放置时的操作
-  override fun onPlace(state: BlockState, level: Level, pos: BlockPos, oldState: BlockState, isMoving: Boolean) {
-        super.onPlace(state, level, pos, oldState, isMoving)
-
-        if (level.isClientSide) return
-        level as ServerLevel
-
-        val ship = level.getShipObjectManagingPos(pos) ?: level.getShipManagingPos(pos) ?: return
-        EngineShipControl.getOrCreate(ship).helms += 1
-    }
-
-       // 当块被破坏时的操作
-  override fun destroy(level: LevelAccessor, pos: BlockPos, state: BlockState) {
-        super.destroy(level, pos, state)
-
-        if (level.isClientSide) return
-        level as ServerLevel
-
-        level.getShipManagingPos(pos)?.getAttachment<EngineShipControl>()?.let { control ->
-
-            if (control.helms <= 1 && control.seatedPlayer?.vehicle?.type == ValkyrienSkiesMod.SHIP_MOUNTING_ENTITY_TYPE) {
-                control.seatedPlayer!!.unRide()
-                control.seatedPlayer = null
-            }
-
-            control.helms -= 1
-        }
-    }
-       
-
   // 当块被使用时的操作
     override fun use(
         state: BlockState,
