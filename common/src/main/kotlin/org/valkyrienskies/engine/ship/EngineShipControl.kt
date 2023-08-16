@@ -84,6 +84,12 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
     // 坐下的玩家
     var seatedPlayer: Player? = null
 
+
+
+
+    //NetworkHandler.sendToServer(packet) // 假设这是发送到服务器的方法
+
+
     // 控制数据类
     private data class ControlData(
         val seatInDirection: Direction,
@@ -105,7 +111,6 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
             }
         }
     }
-
 
     @OptIn(VSBeta::class)
     // 应用力量方法
