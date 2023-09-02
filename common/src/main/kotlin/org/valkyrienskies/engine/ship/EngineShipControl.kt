@@ -13,17 +13,16 @@ import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.api.ships.ServerShip
 import org.valkyrienskies.core.api.ships.getAttachment
 import org.valkyrienskies.core.api.ships.saveAttachment
-import org.valkyrienskies.core.impl.api.ServerShipUser
-import org.valkyrienskies.core.impl.api.ShipForcesInducer
 import org.valkyrienskies.core.impl.api.Ticked
 import org.valkyrienskies.core.impl.api.shipValue
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
-import org.valkyrienskies.core.impl.pipelines.SegmentUtils
 import org.valkyrienskies.engine.EngineConfig
 import org.valkyrienskies.mod.api.SeatedControllingPlayer
 import org.valkyrienskies.mod.common.util.toJOMLD
 import java.lang.Math
 import kotlin.math.*
+import org.valkyrienskies.core.api.ships.ShipForcesInducer
+import org.valkyrienskies.core.impl.api.ServerShipUser
 
 @JsonAutoDetect(
     fieldVisibility = JsonAutoDetect.Visibility.ANY,
@@ -131,9 +130,8 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
         val ship = ship ?: return
         val mass = physShip.inertia.shipMass
         val moiTensor = physShip.inertia.momentOfInertiaTensor
-        val segment = physShip.segments.segments[0]?.segmentDisplacement!!
-        val omega: Vector3dc = SegmentUtils.getOmega(physShip.poseVel, segment, Vector3d())
-        val vel = SegmentUtils.getVelocity(physShip.poseVel, segment, Vector3d())
+        val omega: Vector3dc = physShip.poseVel.omega
+        val vel: Vector3dc = physShip.poseVel.vel
         val balloonForceProvided = balloons * forcePerBalloon
 
 
@@ -216,37 +214,26 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
             val center = transform.positionInWorld
             val stw = transform.shipToWorld
             val wts = transform.worldToShip
-
-            // 计算最大距离
             val largestDistance = run {
                 var dist = center.distance(aabb.minX(), center.y(), aabb.minZ())
                 dist = max(dist, center.distance(aabb.minX(), center.y(), aabb.maxZ()))
                 dist = max(dist, center.distance(aabb.maxX(), center.y(), aabb.minZ()))
                 dist = max(dist, center.distance(aabb.maxX(), center.y(), aabb.maxZ()))
-
                 dist
             }.coerceIn(0.5, EngineConfig.SERVER.maxSizeForTurnSpeedPenalty)
-
             val maxLinearAcceleration = EngineConfig.SERVER.turnAcceleration
-
             val maxLinearSpeed = EngineConfig.SERVER.turnSpeed +
                     extraForce / EngineConfig.SERVER.enginePower * EngineConfig.SERVER.engineTurnPower
-
             val maxOmegaY = maxLinearSpeed / largestDistance
             val maxAlphaY = maxLinearAcceleration / largestDistance
-
             val isBelowMaxTurnSpeed = abs(omega.y()) < maxOmegaY
-
             val normalizedAlphaYMultiplier =
                 if (isBelowMaxTurnSpeed && control.leftImpulse != 0.0f) control.leftImpulse.toDouble()
                 else -omega.y().coerceIn(-1.0, 1.0)
-
             val idealAlphaY = normalizedAlphaYMultiplier * maxAlphaY
-
             val alpha = Vector3d(0.0, idealAlphaY, 0.0)
             val angularImpulse =
                 stw.transformDirection(moiTensor.transform(wts.transformDirection(Vector3d(alpha))))
-
             val torque = Vector3d(angularImpulse)
             physShip.applyInvariantTorque(torque)
             // 结束区域
@@ -258,47 +245,34 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
 
             rotationVector.y = 0.0
 
-            rotationVector.mul(idealAlphaY * -1.5)
+            rotationVector.mul(1.5)
 
-            SegmentUtils.transformDirectionWithScale(
-                physShip.poseVel,
-                segment,
+            physShip.poseVel.rot.transform(
                 moiTensor.transform(
-                    SegmentUtils.invTransformDirectionWithScale(
-                        physShip.poseVel,
-                        segment,
-                        rotationVector,
-                        rotationVector
-                    )
-                ),
-                rotationVector
+                physShip.poseVel.rot.transformInverse(rotationVector)
+                )
             )
 
             physShip.applyInvariantTorque(rotationVector)
 
             val forwardVector = control.seatInDirection.normal.toJOMLD()
-            SegmentUtils.transformDirectionWithoutScale(
-                physShip.poseVel,
-                segment,
-                forwardVector,
-                forwardVector
-            )
+            physShip.poseVel.rot.transform(forwardVector)
             forwardVector.y *= 0.1 // 减少垂直推力
             forwardVector.normalize()
 
             forwardVector.mul(control.forwardImpulse.toDouble())
 
             val playerUpDirection = physShip.poseVel.transformDirection(Vector3d(0.0, 1.0, 0.0))
-            val velOrthogonalToPlayerUp =
+            //val velOrthogonalToPlayerUp = 0.0
                 vel.sub(playerUpDirection.mul(playerUpDirection.dot(vel), Vector3d()), Vector3d())
 
             // 这是船只总是可以出去的速度，没有引擎
             val baseForwardVel = Vector3d(forwardVector).mul(EngineConfig.SERVER.baseSpeed)
-            val baseForwardForce = Vector3d(baseForwardVel).sub(velOrthogonalToPlayerUp).mul(mass * 0 + balloonForceProvided)
+            val baseForwardForce = Vector3d(baseForwardVel)
 
             // 这是我们在任何情况下都想去的最大速度（当不冲刺时）
             val idealForwardVel = Vector3d(forwardVector).mul(EngineConfig.SERVER.maxCasualSpeed)
-            val idealForwardForce = Vector3d(idealForwardVel).sub(velOrthogonalToPlayerUp).mul(mass * 0 + balloonForceProvided)
+            val idealForwardForce = Vector3d(idealForwardVel)
 
             val extraForceNeeded = Vector3d(idealForwardForce).sub(baseForwardForce)
             val actualExtraForce = Vector3d(baseForwardForce)
@@ -328,7 +302,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
         // 计算理想的向上力量
         val idealUpwardForce = Vector3d(
             0.0,
-            idealUpwardVel.y() - vel.y() - (GRAVITY / EngineConfig.SERVER.elevationSnappiness),
+            idealUpwardVel.y() - (GRAVITY / EngineConfig.SERVER.elevationSnappiness),
             0.0
         ).mul(mass * EngineConfig.SERVER.elevationSnappiness)
 
@@ -344,7 +318,7 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
         // 结束区域
 
         // 对y分量添加阻力
-        physShip.applyInvariantForce(Vector3d(vel.y()).mul(-mass))
+        physShip.applyInvariantForce(Vector3d().mul(-mass))
 
     }
 

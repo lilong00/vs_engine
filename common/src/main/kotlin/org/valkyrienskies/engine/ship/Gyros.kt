@@ -3,26 +3,17 @@ package org.valkyrienskies.engine.ship
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import net.minecraft.network.chat.TranslatableComponent
 import net.minecraft.world.entity.player.Player
-import org.joml.AxisAngle4d
-import org.joml.Quaterniond
 import org.joml.Vector3d
 import org.joml.Vector3dc
 import org.valkyrienskies.core.api.VSBeta
-import org.valkyrienskies.core.api.ships.PhysShip
-import org.valkyrienskies.core.api.ships.ServerShip
-import org.valkyrienskies.core.api.ships.getAttachment
-import org.valkyrienskies.core.api.ships.saveAttachment
+import org.valkyrienskies.core.api.ships.*
 import org.valkyrienskies.core.impl.api.ServerShipUser
-import org.valkyrienskies.core.impl.api.ShipForcesInducer
 import org.valkyrienskies.core.impl.api.Ticked
 import org.valkyrienskies.core.impl.api.shipValue
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
-import org.valkyrienskies.core.impl.pipelines.SegmentUtils
 import org.valkyrienskies.engine.EngineConfig
 import org.valkyrienskies.mod.api.SeatedControllingPlayer
-import org.valkyrienskies.mod.common.util.toJOMLD
 import kotlin.math.*
 
 @JsonAutoDetect(
@@ -32,7 +23,7 @@ import kotlin.math.*
     setterVisibility = JsonAutoDetect.Visibility.NONE
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
- class Gyros: ShipForcesInducer, ServerShipUser, Ticked {
+ class Gyros(val omega: Vector3dc, val vel: Vector3dc) : ShipForcesInducer, ServerShipUser, Ticked {
 
     @JsonIgnore
     // 船舶实例
@@ -72,9 +63,9 @@ import kotlin.math.*
         physShip as PhysShipImpl
 
         val mass = physShip.inertia.shipMass
-        val segment = physShip.segments.segments[0]?.segmentDisplacement!!
-        val omega: Vector3dc = SegmentUtils.getOmega(physShip.poseVel, segment, Vector3d())
-        val vel = SegmentUtils.getVelocity(physShip.poseVel, segment, Vector3d())
+        val segment = physShip
+        //val omega: Vector3dc = //SegmentUtils.getOmega(physShip.poseVel, segment, Vector3d())
+        //val vel
         val balloonForceProvided = balloons * forcePerBalloon
 
 
@@ -87,11 +78,11 @@ import kotlin.math.*
         physShip.buoyantFactor = 1.0 + floaters * buoyantFactorPerFloater
 
         // 稳定化
+        //stabilize(physShip, omega, vel, segment, physShip, controllingPlayer == null && !aligning, controllingPlayer == null)
         stabilize(
             physShip,
             omega,
             vel,
-            segment,
             physShip,
             controllingPlayer == null && !aligning,
             controllingPlayer == null
@@ -103,7 +94,7 @@ import kotlin.math.*
         // 计算理想的向上力量
         val idealUpwardForce = Vector3d(
             0.0,
-            idealUpwardVel.y() - vel.y() - (GRAVITY / EngineConfig.SERVER.elevationSnappiness),
+            idealUpwardVel.y()  - (GRAVITY / EngineConfig.SERVER.elevationSnappiness),
             0.0
         ).mul(mass * EngineConfig.SERVER.elevationSnappiness)
 
@@ -119,7 +110,7 @@ import kotlin.math.*
         // 结束区域
 
         // 对y分量添加阻力
-        physShip.applyInvariantForce(Vector3d(vel.y()).mul(-mass))
+        physShip.applyInvariantForce(Vector3d().mul(-mass))
     }
 
     var anchors = 0
@@ -162,9 +153,9 @@ import kotlin.math.*
 
     companion object {
         // 获取或创建
-        fun getOrCreate(ship: ServerShip): Gyros {
-            return ship.getAttachment<Gyros>()
-                ?: Gyros().also { ship.saveAttachment(it) }
+        fun getOrCreate(ship: ServerShip) {
+            //return ship.getAttachment<Gyros>()
+                //?: Gyros().also { ship.saveAttachment(it) }
         }
         // 每个气球的力量
         private val forcePerBalloon get() = EngineConfig.SERVER.massPerBalloon * -GRAVITY

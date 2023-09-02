@@ -40,7 +40,7 @@ class GyrosBlock : Block(
         level as ServerLevel
 
         val ship = level.getShipObjectManagingPos(pos) ?: level.getShipManagingPos(pos) ?: return
-        Gyros.getOrCreate(ship).helms += 1
+        //Gyros.getOrCreate(ship).helms += 1
     }
 
     // 当块被破坏时的操作

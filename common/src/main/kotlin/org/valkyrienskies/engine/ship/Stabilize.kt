@@ -1,25 +1,23 @@
 package org.valkyrienskies.engine.ship
 
+import org.apache.commons.compress.harmony.unpack200.SegmentUtils
 import org.joml.Vector3d
 import org.joml.Vector3dc
 import org.valkyrienskies.core.api.ships.PhysShip
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl
-import org.valkyrienskies.core.impl.pipelines.SegmentUtils
 import org.valkyrienskies.engine.EngineConfig
-import org.valkyrienskies.physics_api.SegmentDisplacement
 
 fun stabilize(
     ship: PhysShipImpl,  // 船只实现
     omega: Vector3dc,  // 角速度
     vel: Vector3dc,  // 速度
-    segment: SegmentDisplacement,  // 段位移
     forces: PhysShip,  // 物理船只
     linear: Boolean,  // 线性
     yaw: Boolean  // 偏航
 ) {
     val shipUp = Vector3d(0.0, 1.0, 0.0)  // 船只向上的向量
     val worldUp = Vector3d(0.0, 1.0, 0.0)  // 世界向上的向量
-    SegmentUtils.transformDirectionWithoutScale(ship.poseVel, segment, shipUp, shipUp)  // 转换方向不缩放
+    ship.poseVel.rot.transform(shipUp)
 
     val angleBetween = shipUp.angle(worldUp)  // 船只向上的向量和世界向上的向量之间的角度
     val idealAngularAcceleration = Vector3d()  // 理想的角加速度
@@ -39,18 +37,10 @@ fun stabilize(
         omega.z()
     )
 
-    val stabilizationTorque = SegmentUtils.transformDirectionWithScale(
-        ship.poseVel,
-        segment,
+    val stabilizationTorque = ship.poseVel.rot.transform(
         ship.inertia.momentOfInertiaTensor.transform(
-            SegmentUtils.invTransformDirectionWithScale(
-                ship.poseVel,
-                segment,
-                idealAngularAcceleration,
-                idealAngularAcceleration
-            )
-        ),
-        idealAngularAcceleration
+            ship.poseVel.rot.transformInverse(idealAngularAcceleration)
+        )
     )
 
     stabilizationTorque.mul(EngineConfig.SERVER.stabilizationTorqueConstant)  // 稳定扭矩乘以稳定扭矩常数
