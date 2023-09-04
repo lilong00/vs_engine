@@ -31,65 +31,40 @@ import org.valkyrienskies.core.impl.api.ServerShipUser
     setterVisibility = JsonAutoDetect.Visibility.NONE
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
-// 引擎船舶控制类
 class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
+
     @JsonIgnore
-    // 船舶实例
     override var ship: ServerShip? = null
 
     @delegate:JsonIgnore
-    // 控制玩家
     private val controllingPlayer by shipValue<SeatedControllingPlayer>()
 
-    // 额外力量
     private var extraForce = 0.0
-    // 对齐标志
     var aligning = false
-    // 拆解标志，也会影响位置
-    var disassembling = false 
-    // 物理消耗
+    var disassembling = false // Disassembling also affects position
     private var physConsumption = 0f
-
-    // 锚定状态
     private val anchored get() = anchorsActive > 0
 
-    // 对齐角度
     private var angleUntilAligned = 0.0
-    // 对齐位置
     private var positionUntilAligned = Vector3d()
-    // 对齐目标
     private var alignTarget = 0
-    // 是否可以拆解
     val canDisassemble
         get() = ship != null &&
                 disassembling &&
                 abs(angleUntilAligned) < DISASSEMBLE_THRESHOLD &&
                 positionUntilAligned.distanceSquared(this.ship!!.transform.positionInWorld) < 4.0
-    // 对齐方向
     val aligningTo: Direction get() = Direction.from2DDataValue(alignTarget)
-    // 消耗
     var consumed = 0f
         private set
 
-    // 巡航按键状态
     private var wasCruisePressed = false
     @JsonProperty("cruise")
-    // 巡航状态
     var isCruising = false
-    // 控制数据
     private var controlData: ControlData? = null
 
     @JsonIgnore
-    // 坐下的玩家
     var seatedPlayer: Player? = null
 
-
-
-
-    //NetworkHandler.sendToServer(packet) // 假设这是发送到服务器的方法
-
-
-    // 控制数据类
     private data class ControlData(
         val seatInDirection: Direction,
         var forwardImpulse: Float = 0.0f,
@@ -98,7 +73,6 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
         var sprintOn: Boolean = false
     ) {
         companion object {
-            // 创建控制数据
             fun create(player: SeatedControllingPlayer): ControlData {
                 return ControlData(
                     player.seatInDirection,
@@ -112,18 +86,14 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
     }
 
     @OptIn(VSBeta::class)
-    // 应用力量方法
     override fun applyForces(physShip: PhysShip) {
-        if (ship == null) return
-        // 如果舵小于1，启用流体阻力，因为所有的舵都已被摧毁
         if (helms < 1) {
+            // Enable fluid drag if all the helms have been destroyed
             physShip.doFluidDrag = true
             return
         }
-        // 当舵存在时，禁用流体阻力，因为它使船难以驾驶
+        // Disable fluid drag when helms are present, because it makes ships hard to drive
         physShip.doFluidDrag = EngineConfig.SERVER.doFluidDrag
-
-        //val forcesApplier = physShip
 
         physShip as PhysShipImpl
 
@@ -140,24 +110,34 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
             EngineConfig.SERVER.maxFloaterBuoyantFactor
         )
 
-        // 设置物理船的浮力因子
         physShip.buoyantFactor = 1.0 + floaters * buoyantFactorPerFloater
+        // Revisiting eureka control code.
+        // [x] Move torque stabilization code
+        // [x] Move linear stabilization code
+        // [x] Revisit player controlled torque
+        // [x] Revisit player controlled linear force
+        // [x] Anchor freezing
+        // [x] Rewrite Alignment code
+        // [x] Revisit Elevation code
+        // [x] Balloon limiter
+        // [ ] Add Cruise code
+        // [ ] Rotation based of shipsize
+        // [x] Engine consumption
+        // [ ] Fix elevation sensititvity
 
-        // 对齐区域
+        // region Aligning
 
         val invRotation = physShip.poseVel.rot.invert(Quaterniond())
         val invRotationAxisAngle = AxisAngle4d(invRotation)
-        // Floor使一个数字为0到3，对应于方向
+        // Floor makes a number 0 to 3, which corresponds to direction
         alignTarget = floor((invRotationAxisAngle.angle / (PI * 0.5)) + 4.5).toInt() % 4
         angleUntilAligned = (alignTarget.toDouble() * (0.5 * Math.PI)) - invRotationAxisAngle.angle
-        // 如果正在拆解，计算对齐位置
         if (disassembling) {
             val pos = ship.transform.positionInWorld
             positionUntilAligned = pos.floor(Vector3d())
             val direction = pos.sub(positionUntilAligned, Vector3d())
             physShip.applyInvariantForce(direction)
         }
-        // 如果正在对齐并且对齐角度大于阈值，计算理想扭矩并应用
         if ((aligning) && abs(angleUntilAligned) > ALIGN_THRESHOLD) {
             if (angleUntilAligned < 0.3 && angleUntilAligned > 0.0) angleUntilAligned = 0.3
             if (angleUntilAligned > -0.3 && angleUntilAligned < 0.0) angleUntilAligned = -0.3
@@ -170,19 +150,27 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
 
             physShip.applyInvariantTorque(idealTorque)
         }
-        // 结束对齐区域
+        // endregion
+
+        stabilize(
+            physShip,
+            omega,
+            vel,
+            physShip,
+            controllingPlayer == null && !aligning,
+            controllingPlayer == null
+        )
 
         var idealUpwardVel = Vector3d(0.0, 0.0, 0.0)
 
         val player = controllingPlayer
 
-        // 如果玩家存在
         if (player != null) {
             val currentControlData = ControlData.create(player)
 
-            // 如果玩家当前正在控制船
+            // If the player is currently controlling the ship
             if (!wasCruisePressed && player.cruise) {
-                // 玩家按下了巡航按钮
+                // the player pressed the cruise button
                 isCruising = !isCruising
                 showCruiseStatus()
             } else if (!player.cruise
@@ -190,89 +178,101 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
                 && (player.leftImpulse != 0.0f || player.sprintOn || player.upImpulse != 0.0f || player.forwardImpulse != 0.0f)
                 && currentControlData != controlData
             ) {
-                // 玩家按下了另一个按钮
+                // The player pressed another button
                 isCruising = false
                 showCruiseStatus()
             }
 
-            // 如果不在巡航状态，只接受最新的控制数据
             if (!isCruising) {
+                // only take the latest control data if the player is not cruising
                 controlData = currentControlData
             }
 
             wasCruisePressed = player.cruise
         } else if (!isCruising) {
-            // 如果玩家不在控制船，并且不在巡航状态，重置控制数据
+            // If the player isn't controlling the ship, and not cruising, reset the control data
             controlData = null
         }
 
-
         controlData?.let { control ->
-            // 区域 玩家控制的左右旋转
+            // region Player controlled rotation
             val transform = physShip.transform
             val aabb = ship.worldAABB
             val center = transform.positionInWorld
             val stw = transform.shipToWorld
             val wts = transform.worldToShip
+
             val largestDistance = run {
                 var dist = center.distance(aabb.minX(), center.y(), aabb.minZ())
                 dist = max(dist, center.distance(aabb.minX(), center.y(), aabb.maxZ()))
                 dist = max(dist, center.distance(aabb.maxX(), center.y(), aabb.minZ()))
                 dist = max(dist, center.distance(aabb.maxX(), center.y(), aabb.maxZ()))
+
                 dist
             }.coerceIn(0.5, EngineConfig.SERVER.maxSizeForTurnSpeedPenalty)
+
             val maxLinearAcceleration = EngineConfig.SERVER.turnAcceleration
             val maxLinearSpeed = EngineConfig.SERVER.turnSpeed +
                     extraForce / EngineConfig.SERVER.enginePower * EngineConfig.SERVER.engineTurnPower
+
+            // acceleration = alpha * r
+            // therefore: maxAlpha = maxAcceleration / r
             val maxOmegaY = maxLinearSpeed / largestDistance
             val maxAlphaY = maxLinearAcceleration / largestDistance
+
             val isBelowMaxTurnSpeed = abs(omega.y()) < maxOmegaY
+
             val normalizedAlphaYMultiplier =
                 if (isBelowMaxTurnSpeed && control.leftImpulse != 0.0f) control.leftImpulse.toDouble()
                 else -omega.y().coerceIn(-1.0, 1.0)
+
             val idealAlphaY = normalizedAlphaYMultiplier * maxAlphaY
+
             val alpha = Vector3d(0.0, idealAlphaY, 0.0)
             val angularImpulse =
                 stw.transformDirection(moiTensor.transform(wts.transformDirection(Vector3d(alpha))))
+
             val torque = Vector3d(angularImpulse)
             physShip.applyInvariantTorque(torque)
-            // 结束区域
+            // endregion
 
-            // 区域 玩家控制的前后
+            // region Player controlled banking
             val rotationVector = control.seatInDirection.normal.toJOMLD()
 
             physShip.poseVel.transformDirection(rotationVector)
 
             rotationVector.y = 0.0
 
-            rotationVector.mul(1.5)
+            rotationVector.mul(idealAlphaY * -1.5)
 
             physShip.poseVel.rot.transform(
                 moiTensor.transform(
-                physShip.poseVel.rot.transformInverse(rotationVector)
+                    physShip.poseVel.rot.transformInverse(rotationVector)
                 )
             )
 
             physShip.applyInvariantTorque(rotationVector)
+            // endregion
 
+            // region Player controlled forward and backward thrust
             val forwardVector = control.seatInDirection.normal.toJOMLD()
             physShip.poseVel.rot.transform(forwardVector)
-            forwardVector.y *= 0.1 // 减少垂直推力
+            forwardVector.y *= 0.1 // Reduce vertical thrust
             forwardVector.normalize()
 
             forwardVector.mul(control.forwardImpulse.toDouble())
 
             val playerUpDirection = physShip.poseVel.transformDirection(Vector3d(0.0, 1.0, 0.0))
-            //val velOrthogonalToPlayerUp = 0.0
+            val velOrthogonalToPlayerUp =
                 vel.sub(playerUpDirection.mul(playerUpDirection.dot(vel), Vector3d()), Vector3d())
 
-            // 这是船只总是可以出去的速度，没有引擎
+            // This is the speed that the ship is always allowed to go out, without engines
             val baseForwardVel = Vector3d(forwardVector).mul(EngineConfig.SERVER.baseSpeed)
-            val baseForwardForce = Vector3d(baseForwardVel)
+            val baseForwardForce = Vector3d(baseForwardVel).sub(velOrthogonalToPlayerUp).mul(mass * 10)
 
-            // 这是我们在任何情况下都想去的最大速度（当不冲刺时）
+            // This is the maximum speed we want to go in any scenario (when not sprinting)
             val idealForwardVel = Vector3d(forwardVector).mul(EngineConfig.SERVER.maxCasualSpeed)
-            val idealForwardForce = Vector3d(idealForwardVel)
+            val idealForwardForce = Vector3d(idealForwardVel).sub(velOrthogonalToPlayerUp).mul(mass * 10)
 
             val extraForceNeeded = Vector3d(idealForwardForce).sub(baseForwardForce)
             val actualExtraForce = Vector3d(baseForwardForce)
@@ -281,83 +281,66 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
                 actualExtraForce.fma(min(extraForce / extraForceNeeded.length(), 1.0), extraForceNeeded)
             }
 
-
-            // 应用力量
             physShip.applyInvariantForce(actualExtraForce)
-            // 结束区域
+            // endregion
 
-            // 玩家控制的升降
+            // Player controlled elevation
             if (control.upImpulse != 0.0f) {
-                // 计算理想的向上速度
                 idealUpwardVel = Vector3d(0.0, 1.0, 0.0)
                     .mul(control.upImpulse.toDouble())
                     .mul(EngineConfig.SERVER.baseImpulseElevationRate +
-                        // 平滑处理，当你接近气球最大速度时，升降速度如何缩放
-                        smoothing(2.0, EngineConfig.SERVER.balloonElevationMaxSpeed, balloonForceProvided / mass)
+                            // Smoothing for how the elevation scales as you approaches the balloonElevationMaxSpeed
+                            smoothing(2.0, EngineConfig.SERVER.balloonElevationMaxSpeed, balloonForceProvided / mass)
                     )
             }
         }
 
-        // 区域 升降
-        // 计算理想的向上力量
+        // region Elevation
         val idealUpwardForce = Vector3d(
             0.0,
-            idealUpwardVel.y() - (GRAVITY / EngineConfig.SERVER.elevationSnappiness),
+            idealUpwardVel.y() - vel.y() - (GRAVITY / EngineConfig.SERVER.elevationSnappiness),
             0.0
         ).mul(mass * EngineConfig.SERVER.elevationSnappiness)
 
-        // 计算实际的向上力量
         val actualUpwardForce = Vector3d(0.0, min(balloonForceProvided, max(idealUpwardForce.y(), 0.0)), 0.0)
-        // 应用力量
         physShip.applyInvariantForce(actualUpwardForce)
-        // 结束区域
+        // endregion
 
-        // 区域 锚定
-        // 设置船只是否静止
+        // region Anchor
         physShip.isStatic = anchored
-        // 结束区域
+        // endregion
 
-        // 对y分量添加阻力
-        physShip.applyInvariantForce(Vector3d().mul(-mass))
-
+        // Add drag to the y-component
+        physShip.applyInvariantForce(Vector3d(vel.y()).mul(-mass))
     }
 
-    // 显示巡航状态
     private fun showCruiseStatus() {
-        val cruiseKey = if (isCruising) "hud.vs_engine.start_cruising" else "hud.vs_engine.stop_cruising"
+        val cruiseKey = if (isCruising) "hud.vs_eureka.start_cruising" else "hud.vs_eureka.stop_cruising"
         seatedPlayer?.displayClientMessage(TranslatableComponent(cruiseKey), true)
     }
 
-    // 动力
     var power = 0.0
-    // 锚的数量
-    var anchors = 0 
+    var anchors = 0 // Amount of anchors
         set(v) {
             field = v; deleteIfEmpty()
         }
 
-    // 活动的锚的数量
-    var anchorsActive = 0
-
-    // 气球的数量
-    var balloons = 0
+    var anchorsActive = 0 // Anchors that are active
+    var balloons = 0 // Amount of balloons
         set(v) {
             field = v; deleteIfEmpty()
         }
 
-    // 舵的数量
-    var helms = 0 
+    var helms = 0 // Amount of helms
         set(v) {
             field = v; deleteIfEmpty()
         }
 
-    // 浮子的数量 * 15
-    var floaters = 0 
+    var floaters = 0 // Amount of floaters * 15
         set(v) {
             field = v; deleteIfEmpty()
         }
 
-    // 每帧更新
     override fun tick() {
         extraForce = power
         power = 0.0
@@ -365,7 +348,6 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
         physConsumption = 0.0f
     }
 
-    // 如果为空则删除
     private fun deleteIfEmpty() {
         if (helms <= 0 && floaters <= 0 && anchors <= 0 && balloons <= 0) {
             ship?.saveAttachment<EngineShipControl>(null)
@@ -374,26 +356,19 @@ class EngineShipControl : ShipForcesInducer, ServerShipUser, Ticked {
 
     /**
      * f(x) = max - smoothing / (x + (smoothing / max))
-     * 平滑函数
      */
     private fun smoothing(smoothing: Double, max: Double, x: Double): Double = max - smoothing / (x + (smoothing / max))
 
     companion object {
-        // 获取或创建
         fun getOrCreate(ship: ServerShip): EngineShipControl {
             return ship.getAttachment<EngineShipControl>()
                 ?: EngineShipControl().also { ship.saveAttachment(it) }
         }
 
-        // 对齐阈值
         private const val ALIGN_THRESHOLD = 0.01
-        // 拆解阈值
         private const val DISASSEMBLE_THRESHOLD = 0.02
-        // 每个气球的力量
         private val forcePerBalloon get() = EngineConfig.SERVER.massPerBalloon * -GRAVITY
 
-        // 重力
         private const val GRAVITY = -10.0
     }
-
 }
